@@ -1,54 +1,76 @@
+/**
+* @file main.cpp
+* @brief ナップサック問題の解決
+* @author 長谷川　勇太
+* @date 2019/05/01
+*/
+
 #include "main.h"
 
-typedef struct {
-	int rank;
-	int val;
-	int t_data[TYPE];
-} data;
-
-void reset(data* mydata);		//! 構造体初期化
-void i_ran(data* my_data);		//! 乱数格納
-void rank(data* my_data);		//! val付け
-void sort(data* my_data);		//! valのソート（降順）
-void change(data* my_data);		//! 掛け合わせ
-
+/**
+* @fn void main(void)
+* @brief ランダムで重みに価値をつけ評価していき、
+         上位の掛け合わせによって最適解を算出する
+* @param (void) なし
+* @return void  なし
+* @detail 乱数格納、rank付け、ソート、掛け合わせ、突然変異の関数呼び出し
+* @date 2019/05/01
+*/
 void main(void) {
 
-	data mydata[ARRAY];			//! 構造体実体生成
+	//! 構造体実体生成
+	data mydata[ARRAY];			
 
-	reset(mydata);				//! 初期化
+	//初期化
+	reset(mydata);	
+	// 乱数格納
+	i_ran(mydata);			
+
+	for (int i = 0; i < 1000; i++) {
+		//! 突然変異乱数
+		srand((unsigned)time(NULL));
+		// rank付け
+		rank(mydata);
+		// バブルソート
+		sort(mydata);
 	
-	i_ran(mydata);				//! 乱数格納
-
-	for (int loop = 0; loop < 200; loop++) {
-
-		rank(mydata);				//! rank付け
-		sort(mydata);				//! ソート
-
-/*		for (int i = 0; i < ARRAY; i++) {
-			printf("rank:%d val%02d：", mydata[i].rank, mydata[i].val);
-			for (int j = 0; j < TYPE; j++) {
-				printf("%d", mydata[i].t_data[j]);
-			}
-			printf("\n");
-		}*/
-
-		change(mydata);				//! 掛け合わせ
+		// 掛け合わせ
+		change(mydata);
+	
+		if (rand() % 30 == 1) {
+			mutation(mydata);
+		}
 	}
 
-	for (int i = 0; i < ARRAY; i++) {
-		printf("rank:%d val:%04d：", mydata[i].rank, mydata[i].val);
+	//上位２つ出力
+	view(mydata);
+
+	system("pause");
+}
+
+/**
+* @fn void view(data* mydata)
+* @brief 結果の表示
+* @return void なし
+* @details 構造体の表示
+* @date 2019/05/01
+*/
+void view(data* mydata) {
+
+	for (int i = 0; i < ARRAY/2; i++) {
+		printf("rank:%d val:%05d：", mydata[i].rank, mydata[i].val);
 		for (int j = 0; j < TYPE; j++) {
 			printf("%d", mydata[i].t_data[j]);
 		}
 		printf("\n");
 	}
-
-	system("pause");
-
 }
 
-/** 構造体初期化
+/**
+* @fn void reset(data* mydata)
+* @brief 構造体初期化
+* @return void なし
+* @date 2019/05/01
 */
 void reset(data* mydata) {
 
@@ -65,78 +87,120 @@ void reset(data* mydata) {
 }
 
 /**
-* @fn void i_ran()
-* @brief 乱数を二次元配列び格納
+* @fn void i_ran(data* mydata)
+* @brief 乱数を構造体に格納
 * @return void なし
-* @details 乱数の格納
+* @date 2019/05/01
 */
-void i_ran(data* my_data) {
+void i_ran(data* mydata) {
 	//乱数
 	srand((unsigned)time(NULL));
 
 	//乱数格納
 	for (int i = 0; i < ARRAY; i++) {
 		for (int j = 0; j < TYPE; j++) {
-			my_data[i].t_data[j] = rand() % 2;
+			mydata[i].t_data[j] = rand() % 2;
 		}
 	}
 }
 
-void rank(data* my_data) {
+/**
+* @fn void rank(data* mydata)
+* @brief ランク付け
+* @return void なし
+* @detail 重みと価値に対する評価を行う。
+*         重みがリミット内であれば重み×価値を評価とする。
+* @date 2019/05/03
+*/
+void rank(data* mydata) {
 
 	//! 重みと価値配列　
 	int weight[TYPE] = { 2,  4, 6,   1,   8,   9,  10,   1 };
 	int price[TYPE] = { 100, 10, 5, 100, 200, 150, 300, 500 };
 
-	//!重さリミット比較
-	int w_temp = 0;
-	int p_temp = 0;
+	//! 重みと価値の一時格納
+	int w_temp = 0;			
+	int p_temp = 0;			
 
 	for (int i = 0; i < ARRAY; i++) {
 		for (int j = 0; j < TYPE; j++) {
-			w_temp += my_data[i].t_data[j] * weight[i];
-			if (my_data[i].t_data[j] == 1) {
-				p_temp += weight[i] * price[i];
+
+			// 重みの集計
+			w_temp += mydata[i].t_data[j] * weight[j];
+
+			// 重みと価値の算出
+			if (mydata[i].t_data[j] == 1) {
+				p_temp += weight[j] * price[j];
 			}
 		}
-		if (w_temp < LIMIT) {
-			my_data[i].val = p_temp;
+		// 重みのリミット判定
+		if (w_temp > LIMIT) {
+			mydata[i].val = 0;
 		}
-		else {
-			my_data[i].val = 0;
-		}
+		mydata[i].val = p_temp;
+
+		// リセット
+		p_temp = 0;
 		w_temp = 0;
 	}
 }
 
-void sort(data* my_data) {
+/**
+* @fn void sort(data* mydata)
+* @brief ランクのソート
+* @return void なし
+* @date 2019/05/03
+*/
+void sort(data* mydata) {
 
+	//! 一時格納
 	data temp;
 
 	for (int i = 0; i< ARRAY; i++) {
 		for (int j = ARRAY - 1; j > i; j--) {
-			if (my_data[j].val > my_data[j - 1].val) {
-				memcpy(&temp, &my_data[j], sizeof(data));
-				memcpy(&my_data[j], &my_data[j-1], sizeof(data));
-				memcpy(&my_data[j-1], &temp, sizeof(data));
+			if (mydata[j].val > mydata[j - 1].val) {
+				memcpy(&temp, &mydata[j], sizeof(data));
+				memcpy(&mydata[j], &mydata[j-1], sizeof(data));
+				memcpy(&mydata[j-1], &temp, sizeof(data));
 			}
 		}
 	}
 	for (int i = 0; i < ARRAY; i++) {
-		my_data[i].rank = i+1;
+		mydata[i].rank = i+1;
 	}
 }
 
-void change(data* my_data) {
+/**
+* @fn void change(data* mydata)
+* @brief 掛け合わせ
+* @return void なし
+* @detail 上位二つのデータを掛け合わせ２つの子作成し、下位二つに書き換える。
+* @date 2019/05/05
+*/
+void change(data* mydata) {
 
-		//! rank1位とrank2位の上位と下位rank3位に格納
 	for (int i = 0; i < TYPE/2; i++) {
-		my_data[2].t_data[i] = my_data[0].t_data[i];
-		my_data[3].t_data[i] = my_data[1].t_data[i];
+		mydata[2].t_data[i] = mydata[0].t_data[i];
+		mydata[3].t_data[i] = mydata[1].t_data[i];
 	}
 	for (int i = TYPE - 1; i >= TYPE / 2; i--) {
-		my_data[2].t_data[i] = my_data[1].t_data[i];
-		my_data[3].t_data[i] = my_data[0].t_data[i];
+		mydata[2].t_data[i] = mydata[1].t_data[i];
+		mydata[3].t_data[i] = mydata[0].t_data[i];
 	}
 
+}
+
+/**
+* @fn void mutation(data* mydata)
+* @brief 突然変異
+* @return void なし
+* @detail ランダムで上位のデータを入れ替える。
+* @date 2019/05/13
+*/
+void mutation(data* mydata) {
+
+	for (int i = 0; i < TYPE / 2; i++) {
+		mydata[0].t_data[TYPE-i] = mydata[0].t_data[i];
+		mydata[1].t_data[TYPE-i] = mydata[1].t_data[i];
+	}
 }
