@@ -10,10 +10,10 @@
 * TYPE     data‚Ì—v‘f”
 * LIMIT    ¡‰ñ‚Ìd‚İ‚ÌŒÀŠE’l
 */
-#define ARRAY	 4
-#define TYPE	 8
-#define LIMIT	15
-
+#define ARRAY	 2200
+#define TYPE	  64
+#define LIMIT	  30
+#define ANSER   10000
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +28,7 @@
 typedef struct {
 	int rank;
 	int val;
+	float weight;
 	int t_data[TYPE];
 } data;
 

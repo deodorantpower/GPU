@@ -4,7 +4,6 @@
 * @author 長谷川　勇太
 * @date 2019/05/01
 */
-
 #include "main.h"
 
 /**
@@ -18,7 +17,6 @@
 */
 void main(void) {
 
-	//! 構造体実体生成
 	data mydata[ARRAY];			
 
 	//初期化
@@ -26,20 +24,19 @@ void main(void) {
 	// 乱数格納
 	i_ran(mydata);			
 
-	for (int i = 0; i < 1000; i++) {
+	for (int i = 0; i < ANSER; i++) {
 		//! 突然変異乱数
 		srand((unsigned)time(NULL));
 		// rank付け
 		rank(mydata);
 		// バブルソート
 		sort(mydata);
-	
-		// 掛け合わせ
-		change(mydata);
-	
-		if (rand() % 30 == 1) {
+
+		if (rand() % 1000 == 1) {
 			mutation(mydata);
 		}
+		// 掛け合わせ
+		change(mydata);
 	}
 
 	//上位２つ出力
@@ -57,10 +54,12 @@ void main(void) {
 */
 void view(data* mydata) {
 
-	for (int i = 0; i < ARRAY/2; i++) {
-		printf("rank:%d val:%05d：", mydata[i].rank, mydata[i].val);
+	// 上位二位を表示
+	for (int i = 0; i < 4; i++) {
+		printf("rank:%d price:%d weight:%f:", mydata[i].rank, mydata[i].val,mydata[i].weight);
 		for (int j = 0; j < TYPE; j++) {
 			printf("%d", mydata[i].t_data[j]);
+
 		}
 		printf("\n");
 	}
@@ -83,7 +82,6 @@ void reset(data* mydata) {
 			mydata[i].t_data[j] = 0;
 		}
 	}
-
 }
 
 /**
@@ -115,30 +113,46 @@ void i_ran(data* mydata) {
 void rank(data* mydata) {
 
 	//! 重みと価値配列　
-	int weight[TYPE] = { 2,  4, 6,   1,   8,   9,  10,   1 };
-	int price[TYPE] = { 100, 10, 5, 100, 200, 150, 300, 500 };
+	float weight[TYPE] = { 
+		1.042288f, 1.096132f, 0.952216f,  0.79302f, 1.046246f, 0.823767f, 0.873065f, 0.758806f,
+		0.737015f, 1.028084f, 0.606415f, 0.881106f, 0.884353f, 1.290026f, 0.774216f, 1.014714f,
+		1.229122f, 1.015562f, 0.964802f, 1.288146f, 1.076072f, 0.952694f, 0.704871f, 0.904247f,
+		0.846266f, 0.837016f, 1.059204f, 0.699134f, 0.870344f, 0.858246f, 0.743155f, 0.800332f,
+		1.160441f, 0.715929f, 1.206835f, 1.056951f, 0.898189f, 1.226303f, 1.025044f, 0.640907f,
+		0.899368f, 1.225172f, 0.901907f, 1.068226f, 0.712972f, 1.055511f, 1.114367f, 0.632971f,
+		1.235422f, 0.818592f, 1.277626f, 0.976713f, 0.825303f, 0.786353f, 0.904311f, 1.125975f,
+		0.9002f, 0.687584f, 1.253057f, 0.609091f,  0.88333f,  0.89934f, 0.928529f, 1.195918f };
+
+	int price[TYPE] = { 515, 802, 778, 406, 146, 914, 929, 317,
+						556, 788, 438, 897, 127, 425, 909, 650,
+						802, 532, 768, 524, 376, 204, 113, 627,
+						256, 869, 488, 932, 229, 418, 147, 234,
+						210, 290, 161, 655, 820, 981, 835, 903,
+						864, 468, 908, 421, 128, 446, 298, 289,
+						762, 358, 165, 636, 631, 781, 196, 421,
+						446, 402, 431, 205, 511, 441, 680, 688 };
 
 	//! 重みと価値の一時格納
-	int w_temp = 0;			
+	float w_temp = 0;			
 	int p_temp = 0;			
 
 	for (int i = 0; i < ARRAY; i++) {
 		for (int j = 0; j < TYPE; j++) {
 
-			// 重みの集計
-			w_temp += mydata[i].t_data[j] * weight[j];
-
 			// 重みと価値の算出
 			if (mydata[i].t_data[j] == 1) {
-				p_temp += weight[j] * price[j];
+				p_temp += price[j];
+				// 重みの集計
+				w_temp +=weight[j];
 			}
 		}
 		// 重みのリミット判定
 		if (w_temp > LIMIT) {
-			mydata[i].val = 0;
+			w_temp = 0;
+			p_temp = 0;
 		}
 		mydata[i].val = p_temp;
-
+		mydata[i].weight = w_temp;
 		// リセット
 		p_temp = 0;
 		w_temp = 0;
@@ -160,13 +174,13 @@ void sort(data* mydata) {
 		for (int j = ARRAY - 1; j > i; j--) {
 			if (mydata[j].val > mydata[j - 1].val) {
 				memcpy(&temp, &mydata[j], sizeof(data));
-				memcpy(&mydata[j], &mydata[j-1], sizeof(data));
-				memcpy(&mydata[j-1], &temp, sizeof(data));
+				memcpy(&mydata[j], &mydata[j - 1], sizeof(data));
+				memcpy(&mydata[j - 1], &temp, sizeof(data));
 			}
 		}
 	}
 	for (int i = 0; i < ARRAY; i++) {
-		mydata[i].rank = i+1;
+		mydata[i].rank = i + 1;
 	}
 }
 
@@ -179,13 +193,18 @@ void sort(data* mydata) {
 */
 void change(data* mydata) {
 
-	for (int i = 0; i < TYPE/2; i++) {
-		mydata[2].t_data[i] = mydata[0].t_data[i];
-		mydata[3].t_data[i] = mydata[1].t_data[i];
+
+	for (int i = 0; i < ARRAY / 2; i = i + 4) {
+		for (int j = 0; j < TYPE / 2; j++) {
+			mydata[i + 2].t_data[j] = mydata[i].t_data[j];
+			mydata[i + 3].t_data[j] = mydata[i + 1].t_data[j];
+		}
 	}
-	for (int i = TYPE - 1; i >= TYPE / 2; i--) {
-		mydata[2].t_data[i] = mydata[1].t_data[i];
-		mydata[3].t_data[i] = mydata[0].t_data[i];
+	for (int i = 0; i < ARRAY / 2; i = i + 4) {
+		for (int j = TYPE - 1; j >= TYPE / 2; j--) {
+			mydata[i + 2].t_data[j] = mydata[i + 1].t_data[j];
+			mydata[i + 3].t_data[j] = mydata[i].t_data[j];
+		}
 	}
 
 }
@@ -200,7 +219,7 @@ void change(data* mydata) {
 void mutation(data* mydata) {
 
 	for (int i = 0; i < TYPE / 2; i++) {
-		mydata[0].t_data[TYPE-i] = mydata[0].t_data[i];
-		mydata[1].t_data[TYPE-i] = mydata[1].t_data[i];
+		mydata[0].t_data[TYPE - i] = mydata[0].t_data[i];
+		mydata[1].t_data[TYPE - i] = mydata[1].t_data[i];
 	}
 }
